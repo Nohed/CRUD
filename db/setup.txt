@@ -1,17 +1,21 @@
-CREATE DATABASE inventory_db;
-\c inventory_db
 
+#Sale table
+CREATE TABLE sales( id SERIAL PRIMARY KEY, product_id INT REFERENCES products(id), quantity INT NOT NULL CHECK (quantity >0), sale_date TIMESTAMP NOT NULL);
+
+#Products table
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    stock INT NOT NULL DEFAULT 0
+    price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
+    stock INT NOT NULL CHECK (stock >= 0)
 );
 
-CREATE TABLE sales (
+#Restock Orders
+CREATE TABLE restock_orders (
     id SERIAL PRIMARY KEY,
-    product_id INT REFERENCES products(id),
-    quantity INT NOT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    product_id INT REFERENCES products(id) ON DELETE CASCADE,
+    quantity INT NOT NULL CHECK (quantity > 0),
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) CHECK (status IN ('pending', 'completed')) DEFAULT 'pending'
 );
