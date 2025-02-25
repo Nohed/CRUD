@@ -15,7 +15,7 @@ def get_products():
         return jsonify({"error": "Database connection failed"}), 500  # Handle connection failure
     
     cur = conn.cursor()
-    cur.execute("SELECT id, name, price, stock FROM products;")
+    cur.execute("SELECT id, description ,name, price, stock FROM products;")
     products = cur.fetchall()
     
     cur.close()
