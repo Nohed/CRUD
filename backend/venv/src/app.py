@@ -17,40 +17,22 @@ load_dotenv()
 # Initialize Flask
 app = Flask(__name__)
 
-# Config
+# Load Secret key for session management from ".env"
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-# Enable CORS
+# Enable CORS - Allow Frontend on :5173 (currently) to acces the API at :5000 (currently)
 CORS(app)
 
-# Register blueprints
+# Blueprints, set each route with prefix
 app.register_blueprint(product_bp, url_prefix='/products')
 app.register_blueprint(sale_bp, url_prefix='/sales')
 app.register_blueprint(restock_bp, url_prefix='/restock-orders')
 
+# No data is reached from homepage. Simple message to confirm API is running
 @app.route('/')
 def hello_world():
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            "INSERT INTO products (name, description, price, stock) VALUES (%s, %s, %s, %s) RETURNING id;",
-            ("Sample Product", "This is a sample product.", 10.99, 100)
-        )
-        conn.commit()
-        new_id = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return f"Hello World! New product inserted with ID: {new_id}"
-    except psycopg2.Error as e:
-        conn.rollback()
-        cur.close()
-        conn.close()
-        return jsonify({"error": str(e)}), 500
+	    return jsonify({"message": "Home page, welcome to the API"})
 
 # Run the application
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) # Debug prints

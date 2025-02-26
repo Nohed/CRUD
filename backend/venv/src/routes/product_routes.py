@@ -2,30 +2,33 @@ from flask import Blueprint, request, jsonify
 from db import get_db_connection  # Import from db.py
 import psycopg2
 
+# Create a Blueprint object
 product_bp = Blueprint('product_bp', __name__)
 
-@product_bp.route('/test', methods=['GET'])
-def test():
-    return jsonify({"message": "Test successful"})
+# -- 
+# The cursor from connection object uses DictCursor to return dict object
+# Routes return JSON objects
+# -- 
 
+# fetch all products
 @product_bp.route('/', methods=['GET'])
 def get_products():
     conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Database connection failed"}), 500  # Handle connection failure
     
-    cur = conn.cursor()
-    cur.execute("SELECT id, description ,name, price, stock FROM products;")
+    cur = conn.cursor() # Uses a dict cursor
+    cur.execute("SELECT id, description ,name, price, stock FROM products;") # Actuall SQL query
     products = cur.fetchall()
     
     cur.close()
     conn.close()
     
-    return jsonify([dict(p) for p in products])
+    return jsonify([dict(p) for p in products]) # Make sure product is in dictoionary format, then return as JSON
 
 @product_bp.route('/', methods=['POST'])
 def add_product():
-    data = request.json
+    data = request.json # Get JSON data from request
     conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Database connection failed"}), 500
@@ -33,14 +36,14 @@ def add_product():
     cur = conn.cursor()
     try:
         cur.execute(
-            "INSERT INTO products (name, description, price, stock) VALUES (%s, %s, %s, %s) RETURNING id;",
-            (data['name'], data.get('description', ""), data['price'], data['stock'])
+            "INSERT INTO products (name, description, price, stock) VALUES (%s, %s, %s, %s) RETURNING id;", # insert query and get ID from DB
+            (data['name'], data.get('description', ""), data['price'], data['stock']) # Actual data to insert, allow for empty description
         )
         conn.commit()
         new_id = cur.fetchone()[0]
         cur.close()
         conn.close()
-        return jsonify({"message": "Product added", "id": new_id}), 201
+        return jsonify({"message": "Product added", "id": new_id}), 201 # Return the ID of then newly created product 
     except psycopg2.Error as e:
         conn.rollback()  # Rollback in case of an error
         cur.close()

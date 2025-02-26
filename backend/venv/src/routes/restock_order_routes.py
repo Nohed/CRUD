@@ -2,6 +2,10 @@ from flask import Blueprint, request, jsonify
 from db import get_db_connection  # Import from db.py
 import psycopg2
 
+# -- 
+# The cursor from connection object uses DictCursor to return dict object
+# Routes return JSON objects
+# -- 
 
 restock_bp = Blueprint('restock_bp', __name__)
 
