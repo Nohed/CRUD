@@ -33,10 +33,12 @@ export default function ProductList() {
     price: "",
     stock: "",
   });
-  const [saleQuantity, setSaleQuantity] = useState({});
   const [editProduct, setEditProduct] = useState(null); // Holds product being edited
   const [restockProduct, setRestockProduct] = useState(null); // Holds product for restock
   const [restockQuantity, setRestockQuantity] = useState(""); // Holds restock quantity
+  const [sellProduct, setSellProduct] = useState(null); // Holds product being sold
+  const [sellQuantity, setSellQuantity] = useState(""); // Holds sell quantity
+  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false); // Controls add product dialog
 
   useEffect(() => {
     fetchProducts();
@@ -55,6 +57,7 @@ export default function ProductList() {
       stock: parseInt(newProduct.stock, 10),
     });
     setNewProduct({ name: "", description: "", price: "", stock: "" });
+    setAddProductDialogOpen(false);
     fetchProducts();
   };
 
@@ -63,17 +66,19 @@ export default function ProductList() {
     fetchProducts();
   };
 
-  const handleRecordSale = async (id) => {
-    const quantity = saleQuantity[id] ? parseInt(saleQuantity[id], 10) : 0;
+  const handleRecordSale = async () => {
+    if (!sellProduct || !sellQuantity) return;
+    const quantity = parseInt(sellQuantity, 10);
     if (quantity <= 0) return;
 
     await addSale({
-      product_id: id,
+      product_id: sellProduct.id,
       quantity,
       sale_date: new Date().toISOString(),
     });
 
-    setSaleQuantity((prev) => ({ ...prev, [id]: "" })); // Reset input field
+    setSellProduct(null);
+    setSellQuantity("");
     fetchProducts(); // Refresh product list to update stock
   };
 
@@ -109,44 +114,26 @@ export default function ProductList() {
     fetchProducts();
   };
 
+  const openAddProductDialog = () => {
+    setNewProduct({ name: "", description: "", price: "", stock: "" });
+    setAddProductDialogOpen(true);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Products
-      </Typography>
-      <Box display="flex" gap={2} mb={2}>
-        <TextField
-          label="Name"
-          value={newProduct.name}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, name: e.target.value })
-          }
-        />
-        <TextField
-          label="Description"
-          value={newProduct.description}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, description: e.target.value })
-          }
-        />
-        <TextField
-          label="Price"
-          type="number"
-          value={newProduct.price}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, price: e.target.value })
-          }
-        />
-        <TextField
-          label="Stock"
-          type="number"
-          value={newProduct.stock}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, stock: e.target.value })
-          }
-        />
-        <Button variant="contained" color="primary" onClick={handleAddProduct}>
-          Add Product
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
+        <Typography variant="h4">Products</Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={openAddProductDialog}
+        >
+          Add New Product
         </Button>
       </Box>
       <TableContainer component={Paper}>
@@ -162,68 +149,114 @@ export default function ProductList() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>{product.id}</TableCell>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.description}</TableCell>
-                <TableCell>${product.price}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell>
-                  <TextField
-                    label="Qty"
-                    type="number"
-                    size="small"
-                    sx={{ width: "70px", mr: 1 }}
-                    value={saleQuantity[product.id] || ""}
-                    onChange={(e) =>
-                      setSaleQuantity({
-                        ...saleQuantity,
-                        [product.id]: e.target.value,
-                      })
-                    }
-                  />
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    onClick={() => handleRecordSale(product.id)}
-                  >
-                    Sell
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="warning"
-                    size="small"
-                    sx={{ ml: 1 }}
-                    onClick={() => handleEditProduct(product)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="info"
-                    size="small"
-                    sx={{ ml: 1 }}
-                    onClick={() => setRestockProduct(product)}
-                  >
-                    Restock
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="small"
-                    sx={{ ml: 1 }}
-                    onClick={() => handleDeleteProduct(product.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {products
+              .sort((a, b) => a.id - b.id) // Sort by product ID in ascending order
+              .map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>{product.id}</TableCell>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.description}</TableCell>
+                  <TableCell>${product.price}</TableCell>
+                  <TableCell>{product.stock}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      onClick={() => {
+                        setSellProduct(product);
+                        setSellQuantity("");
+                      }}
+                    >
+                      Sell
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      size="small"
+                      sx={{ ml: 1 }}
+                      onClick={() => handleEditProduct(product)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="info"
+                      size="small"
+                      sx={{ ml: 1 }}
+                      onClick={() => setRestockProduct(product)}
+                    >
+                      Restock
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      size="small"
+                      sx={{ ml: 1 }}
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Add Product Dialog */}
+      <Dialog
+        open={addProductDialogOpen}
+        onClose={() => setAddProductDialogOpen(false)}
+      >
+        <DialogTitle>Add New Product</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Name"
+            fullWidth
+            margin="dense"
+            value={newProduct.name}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, name: e.target.value })
+            }
+          />
+          <TextField
+            label="Description"
+            fullWidth
+            margin="dense"
+            value={newProduct.description}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, description: e.target.value })
+            }
+          />
+          <TextField
+            label="Price"
+            type="number"
+            fullWidth
+            margin="dense"
+            value={newProduct.price}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, price: e.target.value })
+            }
+          />
+          <TextField
+            label="Stock"
+            type="number"
+            fullWidth
+            margin="dense"
+            value={newProduct.stock}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, stock: e.target.value })
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddProductDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleAddProduct} color="primary">
+            Add Product
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Edit Product Dialog */}
       <Dialog open={!!editProduct} onClose={() => setEditProduct(null)}>
@@ -293,6 +326,30 @@ export default function ProductList() {
           <Button onClick={() => setRestockProduct(null)}>Cancel</Button>
           <Button onClick={handleRestock} color="primary">
             Restock
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Sell Product Dialog */}
+      <Dialog open={!!sellProduct} onClose={() => setSellProduct(null)}>
+        <DialogTitle>Sell Product</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom>
+            {sellProduct?.name} - Current Stock: {sellProduct?.stock}
+          </Typography>
+          <TextField
+            label="Quantity"
+            type="number"
+            fullWidth
+            margin="dense"
+            value={sellQuantity}
+            onChange={(e) => setSellQuantity(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSellProduct(null)}>Cancel</Button>
+          <Button onClick={handleRecordSale} color="primary">
+            Sell
           </Button>
         </DialogActions>
       </Dialog>

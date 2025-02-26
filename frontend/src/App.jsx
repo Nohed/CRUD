@@ -5,11 +5,9 @@ import Header from "./components/header";
 import ProductList from "./components/productList";
 import SaleList from "./components/saleList";
 import RestockList from "./components/restockList";
+import Dashboard from "./components/dashboard";
 import theme from "./theme/theme";
 import "./App.css";
-
-// Placeholder Dashboard component
-const Dashboard = () => <h1>Dashboard</h1>;
 
 function App() {
   return (
@@ -20,7 +18,7 @@ function App() {
           <Sidebar />
           <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
             <Header />
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Box component="main" sx={{ flexGrow: 1, p: 3, pt: 20 }}>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/products" element={<ProductList />} />

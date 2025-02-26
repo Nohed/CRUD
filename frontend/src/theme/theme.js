@@ -19,6 +19,9 @@ const theme = createTheme({
     fifth: {
       main: "#fb8500",
     },
+    sixth: {
+      main: "#ff44336",
+    },
   },
   typography: {
     fontFamily: "Manrope, Arial, sans-serif", // Font style for your app
