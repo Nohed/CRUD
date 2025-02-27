@@ -1,6 +1,10 @@
 
 #Sale table
-CREATE TABLE sales( id SERIAL PRIMARY KEY, product_id INT REFERENCES products(id), quantity INT NOT NULL CHECK (quantity >0), sale_date TIMESTAMP NOT NULL);
+CREATE TABLE sales( id SERIAL PRIMARY KEY,
+product_id INT REFERENCES products(id),
+quantity INT NOT NULL CHECK (quantity >0),
+sale_date TIMESTAMP NOT NULL
+);
 
 #Products table
 CREATE TABLE products (
