@@ -30,6 +30,7 @@ const apiRequest = async (method, endpoint, data = null) => {
       method,
       url: `${API_URL}${endpoint}`,
       data,
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {

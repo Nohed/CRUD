@@ -21,7 +21,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # Enable CORS - Allow Frontend on :5173 (currently) to acces the API at :5000 (currently)
-CORS(app)
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 # Blueprints, set each route with prefix
 app.register_blueprint(product_bp, url_prefix='/products')
