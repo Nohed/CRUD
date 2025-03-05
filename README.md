@@ -13,6 +13,6 @@
 
 ## Backend
 
-    •	*Python* with *Flask* to build the API
-    •	Flask-CORS → Allows frontend (React) to talk to the backend.
-    •	Psycopg2-binary → Connects Flask to PostgreSQL.
+-	*Python* with *Flask* to build the API
+-	*Flask-CORS* → Allows frontend (React) to talk to the backend.
+-	*Psycopg2* → Connects Flask to PostgreSQL.
