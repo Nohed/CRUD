@@ -1,14 +1,17 @@
-# Frontend
+# ----------------- TECH STACK -----------------
+
+
+## Frontend
 
 - React
 - Vite
 - MUI / Material UI for components
 
-# Database
+## Database
 
 - PostgreSQL
 
-# Backend
+## Backend
 
     •	*Python* with *Flask* to build the API
     •	Flask-CORS → Allows frontend (React) to talk to the backend.
