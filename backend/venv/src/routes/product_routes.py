@@ -86,15 +86,38 @@ def delete_product(product_id):
         return jsonify({"error": "Database connection failed"}), 500
 
     cur = conn.cursor()
-    cur.execute("DELETE FROM products WHERE id = %s RETURNING id;", (product_id,))
-    deleted = cur.fetchone()
     
-    if deleted:
-        conn.commit()
+    try:
+        # If a sale references a product -> cant delete. Make sure product does not have sale
+        cur.execute("SELECT COUNT(*) FROM sales WHERE product_id = %s;", (product_id,))
+        count = cur.fetchone()[0]
+        
+        if count > 0:
+            # Return a 400 error with a helpful message if the product is referenced in sales
+            cur.close()
+            conn.close()
+            return jsonify({
+                "error": "This product has existing sales and cant be removed",
+                "salesCount": count,
+                "productId": product_id
+            }), 400
+        
+        # No sales for this product -> Its deletable, DO IT
+        cur.execute("DELETE FROM products WHERE id = %s RETURNING id;", (product_id,))
+        deleted = cur.fetchone()
+        
+        if deleted:
+            conn.commit()
+            cur.close()
+            conn.close()
+            return jsonify({"message": "Product deleted"})
+        else:
+            cur.close()
+            conn.close()
+            return jsonify({"error": "Product not found"}), 404
+            
+    except psycopg2.Error as e:
+        conn.rollback()
         cur.close()
         conn.close()
-        return jsonify({"message": "Product deleted"})
-    else:
-        cur.close()
-        conn.close()
-        return jsonify({"error": "Product not found"}), 404
+        return jsonify({"error": str(e)}), 500

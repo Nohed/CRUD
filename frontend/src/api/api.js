@@ -1,30 +1,40 @@
 import axios from "axios";
 
 /*
+ * PRODUCTS_BASE_URL = "http://127.0.0.1:5000/products";
  * Get all products by base_url
  * Post to base_url to add a new product
  * Put to base_url/{id} to update a product
  * Delete to base_url/{id} to delete a product
  */
-const PRODUCTS_BASE_URL = "http://127.0.0.1:5000/products";
+
 /*
+ * RESTOCK_BASE_URL = "http://127.0.0.1:5000/restock-orders";
  * Get from base_url to fetch all restock orders
  * Post to base_url to add a new restock order
  * Put to base_url/{id} to update a restock order
  * Delete to base_url/{id} to delete a restock order
  */
-const RESTOCK_BASE_URL = "http://127.0.0.1:5000/restock-orders";
 
 /*
+ * SALES_BASE_URL = "http://127.0.0.1:5000/sales";
  * Get from base_url to fetch all sales
  * Post to base_url to add a new sale
  * Delete to base_url/{id} to delete a sale
  */
-const SALES_BASE_URL = "http://127.0.0.1:5000/sales";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000"; // Use env variable or fallback
 
+// Helper function to make API requests
+/**
+ *
+ * @param {*} method  GET, POST, PUT, DELETE
+ * @param {*} endpoint endpoint after base API_URL, such as /products/
+ * @param {*} data JSON data to send with the request
+ * @returns JSON response
+ */
 const apiRequest = async (method, endpoint, data = null) => {
+  console.log('Creating REQUEST:', method.toUpperCase(), `${API_URL}${endpoint}`, data || '');
   try {
     const response = await axios({
       method,
@@ -32,13 +42,30 @@ const apiRequest = async (method, endpoint, data = null) => {
       data,
       withCredentials: true,
     });
+
+    console.log('RESPONSE:', response.data);
+
     return response.data;
-  } catch (error) {
-    console.error(
-      `Error with ${method.toUpperCase()} ${endpoint}:`,
-      error.response?.data || error.message
-    );
-    throw error; // Rethrow to handle in the UI
+
+  }
+  catch (error) {
+    console.error('ERROR:', method.toUpperCase(), endpoint);
+
+    // If there is a response, show it, 400, 500 etc
+    if (error.response) {
+      console.error('Server response:', error.response.status, error.response.data);
+
+      // Pass it to UI to display what went wrong
+      throw {
+        status: error.response.status,
+        data: error.response.data,
+        isApiError: true
+      };
+    } else {
+      // Network problem or timeout
+      console.error('Network error:', error.message);
+      throw error;
+    }
   }
 };
 
