@@ -1,5 +1,5 @@
 import { AppBar, Toolbar, Typography } from "@mui/material";
-import WarehouseIcon from "@mui/icons-material/Warehouse"; // Import the Warehouse icon
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 
 const Header = () => {
   return (
@@ -7,7 +7,7 @@ const Header = () => {
       position="fixed"
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        backgroundColor: "white", // Set the background to white
+        backgroundColor: "white",
       }}
     >
       <Toolbar sx={{ justifyContent: "center", gap: 1 }}>
@@ -16,7 +16,7 @@ const Header = () => {
           noWrap
           sx={{
             fontFamily: '"Sigmar"',
-            color: (theme) => theme.palette.secondary.main, // Use the primary color for text
+            color: (theme) => theme.palette.secondary.main,
           }}
         >
           Inventory Management

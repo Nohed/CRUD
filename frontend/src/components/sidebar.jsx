@@ -90,7 +90,7 @@ const Sidebar = () => {
           {menuItems.map((item, index) => (
             <ListItem key={index} disablePadding sx={{ display: "block" }}>
               <ListItemButton
-                component={Link} // Use Link for navigation
+                component={Link}
                 to={item.path}
                 disableRipple
                 sx={{

@@ -31,6 +31,7 @@ import {
   ListItemText,
 } from "@mui/material";
 
+// State management
 export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({
@@ -39,49 +40,58 @@ export default function ProductList() {
     price: "",
     stock: "",
   });
-  const [editProduct, setEditProduct] = useState(null); // Holds product being edited
-  const [restockProduct, setRestockProduct] = useState(null); // Holds product for restock
-  const [restockQuantity, setRestockQuantity] = useState(""); // Holds restock quantity
-  const [sellProduct, setSellProduct] = useState(null); // Holds product being sold
-  const [sellQuantity, setSellQuantity] = useState(""); // Holds sell quantity
-  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false); // Controls add product dialog
-  const [error, setError] = useState(null); // For displaying errors
-  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null); // For delete confirmation
-  const [relatedSales, setRelatedSales] = useState([]); // Sales related to a product
-  const [isDeleting, setIsDeleting] = useState(false); // Delete in progress state
 
+  // States
+  const [editProduct, setEditProduct] = useState(null);
+  const [restockProduct, setRestockProduct] = useState(null);
+  const [restockQuantity, setRestockQuantity] = useState("");
+  const [sellProduct, setSellProduct] = useState(null);
+  const [sellQuantity, setSellQuantity] = useState("");
+  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null);
+  const [relatedSales, setRelatedSales] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // react hooks, load products on component mount
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  // ------------------- API function Calls -------------------
+
+  // Fetch all products
   const fetchProducts = async () => {
     try {
       const data = await getProducts();
       setProducts(data);
     } catch (err) {
-      console.error("Failed to fetch products:", err);
-      setError("Failed to load products. Please try again.");
+      console.error("Fetch products failed: ", err);
+      setError("Could not load products.");
     }
   };
 
+  // Add a new product
   const handleAddProduct = async () => {
-    if (!newProduct.name || !newProduct.price || !newProduct.stock) return;
+    if (!newProduct.name || !newProduct.price || !newProduct.stock) return; // Make sure fields are filled
 
     try {
       await addProduct({
         ...newProduct,
+        // Convert price and stock to numbers
         price: parseFloat(newProduct.price),
         stock: parseInt(newProduct.stock, 10),
       });
-      setNewProduct({ name: "", description: "", price: "", stock: "" });
+      setNewProduct({ name: "", description: "", price: "", stock: "" }); // Clear form
       setAddProductDialogOpen(false);
-      fetchProducts();
+      fetchProducts(); // Get new products
     } catch (err) {
-      console.error("Failed to add product:", err);
-      setError("Failed to add product. Please try again.");
+      console.error("Failed to add product: ", err);
+      setError("Failed to add product.");
     }
   };
 
+  // From a ID, delete product
   const handleDeleteProduct = async (id) => {
     try {
       setIsDeleting(true);
@@ -92,41 +102,43 @@ export default function ProductList() {
     } catch (err) {
       setIsDeleting(false);
 
-      // Check if this is our specific "product has sales" error
-      if (err.isApiError && err.status === 400 &&
-        err.data.error?.includes('referenced in sales')) {
-
+      // The product has existing sales and cannot be directly removed
+      if (
+        err.isApiError &&
+        err.status === 400 &&
+        err.data.error?.includes("has existing sales")
+      ) {
         try {
+          // If the product has sales, try to get sales to show related sales
           const salesData = await getSales();
-          const productSales = salesData.filter(sale => sale.product_id === id);
+          const productSales = salesData.filter(
+            (sale) => sale.product_id === id
+          );
           setRelatedSales(productSales);
-
-          // Keep the delete dialog open but now with sales info
-          // The product is already set in deleteConfirmProduct
         } catch (salesErr) {
           setError("Failed to fetch related sales data");
           setDeleteConfirmProduct(null);
         }
       } else {
-        // Some other error occurred
+        // Unexpected error occured, prob network / timeout
         setError(err.data?.error || "Failed to delete product");
         setDeleteConfirmProduct(null);
       }
     }
   };
-
+  // Deletes the product along with all related sales
   const handleDeleteWithSales = async () => {
     if (!deleteConfirmProduct) return;
 
     try {
       setIsDeleting(true);
 
-      // Delete all related sales first
+      // Delete related sales
       for (const sale of relatedSales) {
         await deleteSale(sale.id);
       }
 
-      // Then delete the product
+      // Delete the product
       await deleteProduct(deleteConfirmProduct.id);
 
       setIsDeleting(false);
@@ -138,12 +150,12 @@ export default function ProductList() {
       setError(err.data?.error || "Failed to delete sales or product");
     }
   };
-
+  // init deletion
   const initiateDelete = (product) => {
     setRelatedSales([]);
     setDeleteConfirmProduct(product);
   };
-
+  // Record a sale
   const handleRecordSale = async () => {
     if (!sellProduct || !sellQuantity) return;
     const quantity = parseInt(sellQuantity, 10);
@@ -165,10 +177,12 @@ export default function ProductList() {
     }
   };
 
+  // Start editing a product
   const handleEditProduct = (product) => {
     setEditProduct({ ...product }); // Open edit dialog with current product data
   };
 
+  // save changes to product
   const handleSaveEdit = async () => {
     if (!editProduct) return;
 
@@ -187,7 +201,7 @@ export default function ProductList() {
       setError("Failed to update product. Please try again.");
     }
   };
-
+  // Create a restock order
   const handleRestock = async () => {
     if (!restockProduct || !restockQuantity) return;
 
@@ -211,9 +225,10 @@ export default function ProductList() {
     setNewProduct({ name: "", description: "", price: "", stock: "" });
     setAddProductDialogOpen(true);
   };
-
+  // Render that shit
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header*/}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -229,17 +244,13 @@ export default function ProductList() {
           Add New Product
         </Button>
       </Box>
-
+      {/* Display error */}
       {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          onClose={() => setError(null)}
-        >
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
-
+      {/* Acutall table with the content*/}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -254,7 +265,7 @@ export default function ProductList() {
           </TableHead>
           <TableBody>
             {products
-              .sort((a, b) => a.id - b.id) // Sort by product ID in ascending order
+              .sort((a, b) => a.id - b.id) // Sort by ID, lowest ID item first
               .map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>{product.id}</TableCell>
@@ -263,6 +274,7 @@ export default function ProductList() {
                   <TableCell>${product.price}</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
+                    {/* Action to perform per product */}
                     <Button
                       variant="contained"
                       color="success"
@@ -315,6 +327,7 @@ export default function ProductList() {
       >
         <DialogTitle>Add New Product</DialogTitle>
         <DialogContent>
+          {/* Add product */}
           <TextField
             label="Name"
             fullWidth
@@ -413,7 +426,7 @@ export default function ProductList() {
         </DialogActions>
       </Dialog>
 
-      {/* Restock Order Dialog */}
+      {/* Create Restock Order Dialog */}
       <Dialog open={!!restockProduct} onClose={() => setRestockProduct(null)}>
         <DialogTitle>Restock Product</DialogTitle>
         <DialogContent>
@@ -473,26 +486,31 @@ export default function ProductList() {
           {relatedSales.length > 0 ? (
             <>
               <Alert severity="warning" sx={{ mb: 2 }}>
-                This product has {relatedSales.length} related sales and cannot be deleted directly.
+                This product has {relatedSales.length} related sales and cannot
+                be deleted directly.
               </Alert>
               <Typography variant="body1" gutterBottom>
-                Product: {deleteConfirmProduct?.name} (ID: {deleteConfirmProduct?.id})
+                Product: {deleteConfirmProduct?.name} (ID:{" "}
+                {deleteConfirmProduct?.id})
               </Typography>
               <Typography variant="body2" gutterBottom sx={{ mt: 2 }}>
                 Related Sales:
               </Typography>
               <List dense>
-                {relatedSales.map(sale => (
+                {relatedSales.map((sale) => (
                   <ListItem key={sale.id}>
                     <ListItemText
                       primary={`Sale #${sale.id}`}
-                      secondary={`Date: ${new Date(sale.sale_date).toLocaleDateString()} - Quantity: ${sale.quantity}`}
+                      secondary={`Date: ${new Date(
+                        sale.sale_date
+                      ).toLocaleDateString()} - Quantity: ${sale.quantity}`}
                     />
                   </ListItem>
                 ))}
               </List>
               <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-                You can delete this product along with all related sales records, but this action cannot be undone.
+                If you still want to delete this product, all sales will also be
+                deleted{" "}
               </Typography>
             </>
           ) : (
